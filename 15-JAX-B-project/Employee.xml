@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<employee>
+	<address>
+		<city>Tuni</city>
+		<country>India</country>
+		<pincode>533401</pincode>
+	</address>
+	<id>1001</id>
+	<name>Siva</name>
+	<role>Developer</role>
+	<salary>25000.0</salary>
+</employee>
