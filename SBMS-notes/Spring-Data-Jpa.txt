@@ -1,0 +1,314 @@
+=================
+Spring Data JPA
+================
+
+=> Application contains several Layers
+
+			1) Presentation Layer ( JSP / Thymeleaf / Angular / React JS / Vue JS )
+
+			2) Web Layer ( Servlets / Struts / Spring Web MVC )
+		
+			3) Persistence Layer ( JDBC / Spring JDBC / Spring ORM / Spring Data JPA )
+
+
+=> Spring Data JPA is used to develop Persistence layer in the application.
+
+=> Spring Data JPA providing ready made methods to perform CRUD operation in DB tables.
+
+=> Data JPA providing ready made methods using interfaces like below
+
+
+					1) CrudRepository ( I )
+
+					2) JpaRepository ( I )
+
+
+	Note : JpaRepository = CrudRepository + Pagination Methods + Sorting Methods
+
+
+==========================
+Spring Data JPA Terminology
+==========================
+
+#####  1) Data Source Object : It represents Database Connections #######
+
+Note: Data Source properties we can configure in "application.properties" or "application.yml" file
+
+
+######  2) Entity Class : The class which is mapped with database table ########
+
+@Entity
+@Table
+@Id
+@Column
+
+####  3) Repository interface : For  every Table we will create one repository interface to perform Crud Operations ###
+
+public interface StudentRepository extends CrudRepository<Student, Integer>{
+
+}
+
+Note: For our Repository interface, implementation will be provided in the runtime using Proxy Class.
+
+Note: By using StudentRepository we can perform CRUD operations in STUDENT_TBL
+
+###### 4) Repository methods : Ready made methods provided by Data JPA to perform CRUD operations #########
+
+
+1) save ( Entity )
+
+2) saveAll (Iterable<Entity> i )
+
+Note: Above two methods are called as "UPSERT" methods  ( UPDATE + INSERT )
+
+3) findById (ID id)
+
+4) findAllById (Iterable<ID> ids)
+
+5) findAll ( )
+
+6) count ( )
+
+7) existById (ID id)
+
+8) deleteById (ID id)
+
+9) deleteAllById (Iterable<ID> ids)
+
+10) deleteAll ( )
+
+
+####### 5) ORM Properties : To automate some configurations
+
+1)  auto_ddl : Dynamic Schema Generation
+
+2) show_sql : Display generated queries on the console
+
+
+
+==============================================
+First Application Development Using Spring Data JPA
+==============================================
+
+1) Create Spring Starter Project with below dependencies
+
+		a) springboot-starter-data-jpa
+
+		b) mysql-driver
+
+2) Create entity class and map with DB table using annotations
+
+3) Create Repository interface to perform CRUD operations
+
+4) Configure Data Source properties in application.yml file
+
+5) Run the application and test the functionality
+
+
+======================Student.java=======================
+@Entity
+@Table(name = "STUDENT_DTLS") // optional
+public class Student {
+
+	@Id
+	@Column(name="student_id") // optional
+	private Integer id;
+	
+	@Column(name="student_name")
+	private String name;
+	
+	@Column(name="student_rank")
+	private Long rank;
+	
+	@Column(name="student_gender")
+	private String gender;
+
+	//setters & getters
+
+}
+
+===========================StudentRepository.java===================
+package in.ashokit.repository;
+
+import org.springframework.data.repository.CrudRepository;
+
+import in.ashokit.entity.Student;
+
+//@Repository
+public interface StudentRepository extends CrudRepository<Student, Integer>{
+
+}
+
+============================application.yml file====================
+spring:
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    password: AshokIT@123
+    url: jdbc:mysql://localhost:3306/sbms27
+    username: ashokit
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+
+===================================Start Class============================
+
+package in.ashokit;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.ConfigurableApplicationContext;
+
+import in.ashokit.entity.Student;
+import in.ashokit.repository.StudentRepository;
+
+@SpringBootApplication
+public class Application {
+
+	public static void main(String[] args) {
+
+		ConfigurableApplicationContext context = SpringApplication.run(Application.class, args);
+
+		StudentRepository studentRepo = context.getBean(StudentRepository.class);
+
+		Student s = new Student();
+		s.setId(103);
+		s.setName("Ashok");
+		s.setRank(1133l);
+		s.setGender("Male");
+		
+		studentRepo.save(s);
+		
+		System.out.println("Record Inserted...");
+
+		Optional<Student> optional = studentRepo.findById(101);
+		
+		if(optional.isPresent()) {
+			System.out.println(optional.get());
+		}
+
+
+		Iterable<Student> findAll = studentRepo.findAll();
+
+		// findAll.forEach(System.out::println);
+		
+		findAll.forEach(s -> System.out.println(s));
+
+
+		if(studentRepo.existsById(503)) {
+			studentRepo.deleteById(503);
+			System.out.println("Record Deleted....");
+		}else {
+			System.out.println("No Record Present...");
+		}
+
+	}
+}
+
+=======================================================================
+
+
+1)save (Entity)
+
+ConfigurableApplicationContext context = SpringApplication.run(Application.class, args);
+
+		StudentRepo studentRepo = context.getBean(StudentRepo.class);
+
+		Student s = new Student();
+		s.setId(1003);
+		s.setName("vasu");
+		s.setRank(1727327l);
+		s.setGender("MALE");
+
+		studentRepo.save(s);
+		System.out.println("Record Inserted...");
+
+
+2)saveAll(Iterable<Entity> i)
+
+		Student s1 = new Student(1004, "Nisanth", 101l, "Male");
+		Student s2 = new Student(1005, "Srinu", 102l, "Male");
+		Student s3 = new Student(1006, "Panther", 103l, "Male");
+
+		List<Student> s = new ArrayList<>();
+		s.add(s1);
+		s.add(s2);
+		s.add(s3);
+		studentRepo.saveAll(s);
+
+
+3)findById (ID id)
+
+		Optional<Student> optional = studentRepo.findById(1000);
+
+		if (optional.isPresent()) {
+			System.out.println(optional);
+		} else {
+			System.out.println("Record not found");
+		}
+
+
+4)findAll( )
+
+		List<Student> list = studentRepo.findAll();
+
+		for (Student s : list) {
+			System.out.println(s);
+		}
+
+
+5)findAllById(Iterable<ID> ids)
+
+ArrayList<Integer> ids = new ArrayList<Integer>();
+		ids.add(1001);
+		ids.add(1002);
+		ids.add(1003);
+		ids.add(1004);
+		ids.add(1005);
+		ids.add(1006);
+
+		List<Student> allIds = studentRepo.findAllById(ids);
+
+		allIds.forEach(System.out::println);
+
+
+6) count()
+
+		long count = studentRepo.count();
+		System.out.println("No of Records :"+count);
+
+
+7)existsById (ID id)
+
+		if(studentRepo.existsById(1001)) #true {
+			System.out.println("Record availabile");
+		}else {
+			System.out.println("Record not availabile");
+		
+
+8) deleteById (ID id)
+
+		if(studentRepo.existsById(1006)) {
+			studentRepo.deleteById(1006);
+			System.out.println("Record deleted successfully");
+		}else {
+			System.out.println("Record not found");
+		}
+
+
+9) deleteAllById (Iterable<ID> ids)
+
+10) deleteAll ( )
+
+
+
+
+
+
+
+
+
+
+
+
+			

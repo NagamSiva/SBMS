@@ -1,0 +1,140 @@
+Custom Generator:
+=============
+
+--->To create Customer generator we should implement Identifier Generator interface.
+
+--->In that interface we have generate() method....
+
+--->we should write logic in that method to generate PK column according to our requirement.
+
+Example:
+
+OD1
+OD2
+OD3
+--
+--
+--
+OD100
+------------------------------------
+here what we have to understand is column data type is varchar.
+
+if we want to store value in this format our PK column type should be varchar.
+
+here, the order id can be divided into 2 parts.
+
+a) prefix ---> OD [it is fixed value]
+b) suffix ----> Number(start with 1 and increment by 1)
+
+--> As prefix is fixed we can create a constant for that
+
+---> for suffix value we can create a Sequence.
+
+Steps to develop Data JPA application with Custom Generator:
+============================================
+
+1) create a spring starter project with below dependencies..
+       i)  Starter Data JPA
+       ii) MySql Driver
+       
+2) Create Entity class using Annotations
+
+3) Create Sequnce in DB for suffix value generation 
+----------------------------------------------------
+create sequence  pid_seq
+start with 1
+increment by 1;      
+
+4) Create Custom Generator class by implementing IdentifierGenerator interface.
+--------------------------------------------------------------------------------
+
+package in.ashokit.generator;
+
+import java.io.Serializable;
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+
+import org.hibernate.HibernateException;
+import org.hibernate.engine.spi.SharedSessionContractImplementor;
+import org.hibernate.id.IdentifierGenerator;
+
+public class OrderIdGenerator implements IdentifierGenerator{
+
+	@Override
+	public Serializable generate(SharedSessionContractImplementor session, Object object) throws HibernateException {
+		String prefix="OD";
+		String suffix="";
+		
+		try {
+			Connection conn = session.connection();
+			Statement stmt = conn.createStatement();
+			String sql="select order_id_seq.nextval from dual";
+			ResultSet resultSet = stmt.executeQuery(sql);
+			if(resultSet.next()) {
+				int sqlVal=resultSet.getInt(1);
+				suffix=String.valueOf(sqlVal);
+			}
+			
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		return prefix+suffix;
+	}
+
+}
+
+
+5) Configure custom genetaor in Entity
+--------------------------------------
+  @Entity
+
+ public class OrderDetailsEntity {
+
+	 @Id
+	 @GenericGenerator(name = "ord_sq", strategy = "cpackage in.ashokit.generator.OrderIdGenerator")  // In the strategy , we have to write 		           													generator class because of our sequen logic execution.
+ 	@GeneratedValue(name="ord_sq")
+	 private String OrderId;
+	 private String OrderBy;
+	 private Date OrderDate;
+ 
+         // setter and getter methods
+
+
+     }  
+
+         
+
+6) Create Repository interface by extending data jpa repository.
+----------------------------------------------------------------
+           
+           public interface OrderDetailsRepository extends JpaRepository<OrderDetailEntity, Seriliazable>{
+
+           }
+  
+     
+
+
+
+============================== Boot Start Class====================================
+
+
+@SpringBootApplication
+public class Application {
+
+ public static void main(String[] args) {
+
+  ConfigurableApplicationContext context = SpringApplication.run(Application.class, args);
+
+  OrderDetailsRepository orderRepo = context.getBean(OrderDetailsRepository.class);
+  
+                    OrderDetailsEntity entity=new OrderDetailsEntity();
+                      entity.setOrderBy("Param");
+                      entity.setOrderDate( new Date());
+                     orderRepo.save(entity);
+      
+                    context.close();
+
+ }
+}
